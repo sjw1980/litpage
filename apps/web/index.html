@@ -6,6 +6,24 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Litpage</title>
     <script>
+      // crypto.randomUUID polyfill for insecure contexts (plain http on a LAN/Tailscale IP):
+      // the Web Crypto UUID API exists only in secure contexts, but getRandomValues is everywhere.
+      // Must be a classic script in <head>: it runs before any module's top-level code.
+      (function () {
+        var c = window.crypto;
+        if (c && typeof c.randomUUID !== 'function') {
+          c.randomUUID = function () {
+            var b = new Uint8Array(16);
+            c.getRandomValues(b);
+            b[6] = (b[6] & 0x0f) | 0x40;
+            b[8] = (b[8] & 0x3f) | 0x80;
+            var hex = Array.prototype.map.call(b, function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+            return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+          };
+        }
+      })();
+    </script>
+    <script>
       // Apply theme before first paint (the appearance choice is stored per device).
       (function () {
         try {
